@@ -21,7 +21,18 @@ namespace MockPracticeTest
         }
 
         [Test]
-        public void GetIdentityFormated_Should_ReturnTheFormatedIdentity()
+        public void Ctr_NULLparameter_ShallThrrow_ArgumentNullException()
+        {
+            Assert.Throws<ArgumentNullException>(() => new Client(null, myMockContainerFormatter.Object));
+            Assert.Throws<ArgumentNullException>(() => new Client(myMockService.Object, null));
+        }
+
+        [Test]
+        public void GetIdentity_ShallReturn_2()
+            => Assert.That("2" == myClient.GetIdentity());
+
+        [Test]
+        public void GetIdentityFormated_ShallReturnTheFormatedIdentity()
         {
             var result = myClient.GetIdentityFormatted();
 
@@ -31,7 +42,7 @@ namespace MockPracticeTest
         }
 
         [Test]
-        public void GetServiceName_Should_ReturnTheNameOfTheService()
+        public void GetServiceName_ShallReturnTheNameOfTheService()
         {
             var serviceName = "name of the service";
             myMockService.SetupGet(s => s.Name).Returns(serviceName);
@@ -50,11 +61,32 @@ namespace MockPracticeTest
         }
 
         [Test]
-        public void GetContentFromatted_Shall_ReturnServiceContent(long id)
+        public void GetContent_ShallReturn_ServiceContent()
         {
+            var expectedResult = "expectedResult";
+            myMockService.Setup(m => m.IsConnected).Returns(false);
+            myMockService.Setup(m => m.GetContent(It.IsAny<long>())).Returns(expectedResult);
+
+            var result = myClient.GetContent(0);
+
+            myMockService.Verify(m => m.Connect(), Times.Once);
+            Assert.AreEqual(expectedResult, result);
+        }
+
+        [Test]
+        public void GetContentFromatted_ShallReturn_FormattedServiceContent()
+        {
+            var inputString = "inputString";
             myMockService.Setup(m => m.IsConnected).Returns(true);
+            myMockService.Setup(m => m.GetContent(It.IsAny<long>())).Returns(inputString);
+            var format = "format";
+            myMockContainerFormatter.Setup(m => m.Format(It.IsAny<string>())).Returns<string>(s => format + s);
 
+            var result = myClient.GetContentFormatted(0);
 
+            myMockService.Verify(m => m.Connect(), Times.Never);
+            StringAssert.StartsWith(format, result);
+            StringAssert.EndsWith(inputString, result);
         }
     }
 }
