@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq;
 
 namespace MockPractice
 {
-	public class StringManipulator
+    public class StringManipulator
 	{
 		private bool IsVowel(char c)
 		{

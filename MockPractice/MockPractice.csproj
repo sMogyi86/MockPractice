@@ -61,6 +61,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Challenge\INowProvider.cs" />
     <Compile Include="Challenge\LogService.cs" />
     <Compile Include="Practice\Client.cs" />
     <Compile Include="Practice\IContentFormat.cs" />
