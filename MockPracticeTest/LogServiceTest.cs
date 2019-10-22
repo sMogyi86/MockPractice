@@ -2,10 +2,6 @@
 using Moq;
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MockPracticeTest
 {
@@ -22,18 +18,25 @@ namespace MockPracticeTest
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
-            var myNowProviderMock = new Mock<INowProvider>();
-            myNowProviderMock.Setup(m => m.GetNow()).Returns(myNow);
+            var nowProviderMock = new Mock<INowProvider>();
+            nowProviderMock.Setup(m => m.GetNow()).Returns(myNow);
 
-            myLogService = new LogService(myNowProviderMock.Object);
+            myLogService = new LogService(nowProviderMock.Object);
 
             myLoggerMock = new Mock<ILogger>();
-            myLoggerMock.Setup(m => m.SupportsLogLevel(It.Is<LogLevel>(l => l == mySupportedLogLevel)));
-            myLoggerMock.Setup(m => m.Log(It.IsAny<string>(), It.IsAny<LogLevel>()))
-                      .Callback<string, LogLevel>((msg, lvl) => { mySpiedLoggedMessageStr = msg; })
-                      .Verifiable();
-
             myLogService.RegisterLogger(myLoggerMock.Object);
+        }
+
+        [SetUp]
+        public void SetUp()
+        {
+            myLoggerMock
+                .Setup(m => m.SupportsLogLevel(It.IsAny<LogLevel>()))
+                .Returns<LogLevel>(lvl => lvl.HasFlag(mySupportedLogLevel));
+            myLoggerMock
+                .Setup(m => m.Log(It.IsAny<string>(), It.IsAny<LogLevel>()))
+                .Callback<string, LogLevel>((msg, lvl) => { mySpiedLoggedMessageStr = msg; });
+                //.Verifiable();
         }
 
         [TearDown]
@@ -50,64 +53,31 @@ namespace MockPracticeTest
             => Assert.Throws<ArgumentNullException>(() => new LogService(null));
 
         [TestCase(LogLevel.Debug, LogLevel.Debug)]
-        public void Log_CalledOnlyIfLevelIsSupported(LogLevel logLevelToTry, LogLevel supportedLogLevel)
+        [TestCase(LogLevel.Error, LogLevel.Debug)]
+        [TestCase(LogLevel.Info, LogLevel.Debug)]
+        public void Log_Shall_BeCalledOnlyIfLevelIsSupported(LogLevel logLevelToTry, LogLevel supportedLogLevel)
         {
             mySupportedLogLevel = supportedLogLevel;
 
-            myLogService.Log(nameof(Log_CalledOnlyIfLevelIsSupported), logLevelToTry);
+            myLogService.Log(nameof(Log_Shall_BeCalledOnlyIfLevelIsSupported), logLevelToTry);
 
             myLoggerMock.Verify(m => m.Log(It.IsAny<string>(), It.IsAny<LogLevel>()), logLevelToTry.HasFlag(supportedLogLevel) ? Times.Once() : Times.Never());
         }
 
-        //[TestCase]
-        //public void Log(string message, LogLevel logLevel)
-        //{
+        [Test]
+        public void Log_Shall_FormatTheRecordWithDate()
+        {
+            mySupportedLogLevel = LogLevel.Error;
+            var messageToLog = nameof(Log_Shall_FormatTheRecordWithDate);
 
-        //    myLogService.Log(message, logLevel);
+            myLogService.Log(messageToLog, mySupportedLogLevel);
 
-        //    /*
-        //    only logs where supported
-        //    startswith the date
-        //    contains message
-        //     */
-        //}
+            Assert.IsTrue(mySpiedLoggedMessageStr.StartsWith(myNow.ToString()));
+            Assert.IsTrue(mySpiedLoggedMessageStr.EndsWith(messageToLog));
+        }
 
         [Test]
         public void RegisterLogger_NULLILoggerParam_Shall_ThrowArgumentNullException()
             => Assert.Throws<ArgumentNullException>(() => myLogService.RegisterLogger(null));
-
-        //[Test]
-        //public void Testing()
-        //{
-        //    string spiedLogMessageStr = null;
-        //    LogLevel spiedLogLevel = default(LogLevel);
-
-        //    var loggerMock = new Mock<ILogger>();
-
-        //    loggerMock
-        //        .Setup(m => m.SupportsLogLevel(It.IsAny<LogLevel>()))
-        //        .Returns(true);
-        //    loggerMock
-        //        .Setup(m => m.Log(It.IsAny<string>(), It.IsAny<LogLevel>()))
-        //        .Callback<string, LogLevel>(
-        //        (msg, lvl) =>
-        //        {
-        //            spiedLogMessageStr = msg;
-        //            spiedLogLevel = lvl;
-        //        })
-        //        .Verifiable();
-
-
-        //    myLogService.RegisterLogger(loggerMock.Object);
-
-        //    string expectedMessage = "alma";
-        //    LogLevel expectedLogLevel = LogLevel.Error;
-
-        //    myLogService.Log(expectedMessage, expectedLogLevel);
-
-        //    Assert.AreEqual(expectedLogLevel, spiedLogLevel);
-        //    Assert.IsTrue(spiedLogMessageStr.StartsWith(myNowProviderMock.Object.GetNow().ToString()));
-        //    Assert.IsTrue(spiedLogMessageStr.Contains(expectedMessage));
-        //}
     }
 }
