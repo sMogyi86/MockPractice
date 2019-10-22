@@ -1,4 +1,5 @@
-﻿using MockPractice;
+﻿using System;
+using MockPractice;
 using NUnit.Framework;
 
 namespace MockPracticeTest
@@ -7,6 +8,10 @@ namespace MockPracticeTest
     public class StringManipulatorTest
     {
         private readonly StringManipulator myStringManipulator = new StringManipulator();
+
+        [Test]
+        public void Transform_NULLParameter_Shall_ThrowArgumentNullException()
+            => Assert.Throws<ArgumentNullException>(() => myStringManipulator.Transform(null));
 
         [TestCase("", "")]
         [TestCase("abcde", "aebcd")]

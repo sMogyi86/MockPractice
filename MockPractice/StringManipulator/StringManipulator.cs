@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 
 namespace MockPractice
 {
@@ -12,6 +13,9 @@ namespace MockPractice
 
 		public string Transform(string s)
 		{
+            if (s is null)
+                throw new ArgumentNullException(nameof(s));
+
 			var x = s.Where(c => IsVowel(c));
 			var y = s.Where(c => !IsVowel(c));
 
